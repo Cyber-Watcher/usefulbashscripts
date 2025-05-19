@@ -66,9 +66,9 @@ install_mc_ini() {
   echo "  • mc.ini для $USER обновлён"
 }
 install_mc_ini "$ORIG_HOME" "$ORIG_USER" \
-  "https://gitlab.com/cyber_watcher/usefulbashscripts/-/raw/main/mc/ini"
+  "https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/main/mc/ini"
 install_mc_ini "/root" "root" \
-  "https://gitlab.com/cyber_watcher/usefulbashscripts/-/raw/main/mcroot/ini"
+  "https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/main/mcroot/ini"
 
 # 4) Настройка tmux + автодополнение
 echo "=== Шаг 4: Настройка tmux ==="

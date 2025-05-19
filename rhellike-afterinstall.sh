@@ -59,9 +59,9 @@ install_mc_ini() {
 
 echo "=== Шаг 3.2: настройка конфигов mc для '$ORIG_USER' ==="
 install_mc_ini "$ORIG_HOME" "$ORIG_USER" \
-  "https://gitlab.com/cyber_watcher/usefulbashscripts/-/raw/main/mc/ini"
+  "https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/main/mc/ini"
 install_mc_ini "/root" "root" \
-  "https://gitlab.com/cyber_watcher/usefulbashscripts/-/raw/main/mcroot/ini"
+  "https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/main/mcroot/ini"
 
 # --- 4) Установка bash-completion (если нужно) и tmux + автодополнение ---
 echo "=== Шаг 4: проверка и установка bash-completion ==="
