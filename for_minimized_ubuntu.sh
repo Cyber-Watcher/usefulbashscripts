@@ -87,5 +87,16 @@ curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/mai
      -o /root/.config/mc/ini
 chown -R root:root /root/.config
 
+# --- Шаг 5: Принудительное включение цветного prompt в login-shell ---
+echo "=== Шаг 5: создание /etc/profile.d/force-color-prompt.sh ==="
+cat > /etc/profile.d/force-color-prompt.sh << 'EOF'
+# /etc/profile.d/force-color-prompt.sh
+# Принудительно включаем цветной prompt в login-shell
+force_color_prompt=yes
+export force_color_prompt
+EOF
+chmod 644 /etc/profile.d/force-color-prompt.sh
+echo "✅ /etc/profile.d/force-color-prompt.sh создан."
+
 echo -e "\nГотово! Настройки применены для пользователя '$ORIG_USER' и для 'root'."
 echo    "Перезапустите терминал или выполните 'source ~/.bashrc'."
