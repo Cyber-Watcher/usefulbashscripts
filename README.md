@@ -5,19 +5,22 @@ I tested this script in minimazed Ubuntu Server 22.04 and 24.04.
 Since the script installs programs into your system, the user from whom you run the installation must have the appropriate rights. You can download the script yourself and edit it to suit your needs or use the following command to install it automatically:
 
 ```
-curl -k https://gitlab.com/cyber_watcher/usefulbashscripts/-/raw/main/for_minimized_ubuntu.sh -o for_minimized_ubuntu.sh && sudo bash for_minimized_ubuntu.sh && rm for_minimized_ubuntu.sh
+curl -sSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/main/for_minimized_ubuntu.sh \
+  -o for_minimized_ubuntu.sh && sudo bash for_minimized_ubuntu.sh && rm for_minimized_ubuntu.sh
 ```
 
 The same script for RHEL like distros.
 
 ```
-curl -k https://gitlab.com/cyber_watcher/usefulbashscripts/-/raw/main/rhellike-afterinstall.sh -o rhellike-afterinstall.sh && sudo bash rhellike-afterinstall.sh && rm rhellike-afterinstall.sh
+curl -sSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/main/rhellike-afterinstall.sh \
+  -o rhellike-afterinstall.sh && sudo bash rhellike-afterinstall.sh && rm rhellike-afterinstall.sh
 ```
 
 For RedOS 8
 
 ```
-curl -k https://gitlab.com/cyber_watcher/usefulbashscripts/-/raw/main/redos8-afterinstall.sh -o redos8-afterinstall.sh && sudo bash redos8-afterinstall.sh && rm redos8-afterinstall.sh
+curl -sSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/main/redos8-afterinstall.sh \
+  -o redos8-afterinstall.sh && sudo bash redos8-afterinstall.sh && rm redos8-afterinstall.sh
 ```
 
 

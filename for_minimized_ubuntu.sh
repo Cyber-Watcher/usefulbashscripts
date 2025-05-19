@@ -66,7 +66,7 @@ curl -fsSL https://raw.githubusercontent.com/imomaliev/tmux-bash-completion/mast
 
 # mc конфиг для пользователя
 mkdir -p "$ORIG_HOME/.config/mc"
-curl -fsSL https://gitlab.com/cyber_watcher/usefulbashscripts/-/raw/main/mc/ini \
+curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/main/mc/ini \
      -o "$ORIG_HOME/.config/mc/ini"
 chown -R "$ORIG_USER:$ORIG_USER" "$ORIG_HOME/.config"
 
@@ -83,7 +83,7 @@ chmod 600 /root/.tmux.conf
 
 # mc конфиг для root
 mkdir -p /root/.config/mc
-curl -fsSL https://gitlab.com/cyber_watcher/usefulbashscripts/-/raw/main/mcroot/ini \
+curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/main/mcroot/ini \
      -o /root/.config/mc/ini
 chown -R root:root /root/.config
 
