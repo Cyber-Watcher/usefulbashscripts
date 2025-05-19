@@ -40,7 +40,7 @@ patch_bashrc() {
   #sed -i "s|ls --color=auto|${LS_TOOL}|g"        "$TARGET_RC"
   sed -i "s|ls -alF|${LS_TOOL} -lag|g"           "$TARGET_RC"
   sed -i "s|ls -A|ls -lA|g"           "$TARGET_RC"
-  sed -i "s|ls -CF|${LS_TOOL}|g"           "$TARGET_RC"
+  sed -i "s|ls -CF|ls|g"           "$TARGET_RC"
   # Переносим '$' на новую строку
   sed -i 's/\\\$/\\n\\$/' "$TARGET_RC"
   # Добавляем bash-completion, если нет
