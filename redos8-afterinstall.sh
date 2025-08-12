@@ -19,11 +19,11 @@ if [ -z "$ORIG_USER" ]; then
 fi
 ORIG_HOME=$(getent passwd "$ORIG_USER" | cut -d: -f6)
 
-# 1) Установка tmux и утилит (mc и bash-completion уже есть)
-echo "=== Шаг 1: Обновление системы и установка tmux и утилит ==="
+# 1) Установка tmux, fish и утилит
+echo "=== Шаг 1: Обновление системы и установка пакетов ==="
 dnf makecache --refresh -y
 dnf update -y
-dnf install -y tmux ncdu bmon traceroute htop eza wget unzip zip curl
+dnf install -y tmux ncdu bmon traceroute htop eza wget unzip zip curl fish
 
 # 2) Патчим /etc/bashrc — бэкап + override PS1
 BRC=/etc/bashrc
@@ -111,10 +111,85 @@ ALIASES
 add_aliases "$ORIG_HOME/.bashrc"
 add_aliases "/root/.bashrc"
 
+# 6) Добавляем настройки автодополнения в .bashrc
+echo "=== Шаг 6: Добавление настроек автодополнения в bashrc ==="
+add_bashrc_settings() {
+  local bashrc_file="$1"
+  local owner="$2"
+  
+  # Проверяем, не добавлены ли уже настройки
+  if ! grep -q "history-search-backward" "$bashrc_file"; then
+    echo "" >> "$bashrc_file"
+    echo "# Авто-дополнение при вводе (добавлено скриптом)" >> "$bashrc_file"
+    echo 'bind '\''"\e[A": history-search-backward'\''   # Стрелка вверх' >> "$bashrc_file"
+    echo 'bind '\''"\e[B": history-search-forward'\''    # Стрелка вниз' >> "$bashrc_file"
+    echo 'bind '\''"\t": menu-complete'\''               # Tab для циклического выбора' >> "$bashrc_file"
+    chown "$owner:$owner" "$bashrc_file"
+    echo "  • Настройки автодополнения добавлены в $bashrc_file"
+  else
+    echo "  ℹ️ Настройки автодополнения уже присутствуют в $bashrc_file"
+  fi
+}
+
+add_bashrc_settings "$ORIG_HOME/.bashrc" "$ORIG_USER"
+add_bashrc_settings "/root/.bashrc" "root"
+
+# 7) Установка fish_prompt для пользователя и root
+echo "=== Шаг 7: Настройка fish_prompt ==="
+install_fish_prompt() {
+  local home_dir="$1"
+  local owner="$2"
+  local fish_dir="$home_dir/.config/fish"
+  local prompt_file="$fish_dir/functions/fish_prompt.fish"
+  
+  # Создаем необходимые директории
+  mkdir -p "$fish_dir/functions"
+  
+  # Создаем файл с промптом
+  cat > "$prompt_file" <<'EOF'
+function fish_prompt
+    set -l last_status $status
+    set -g fish_prompt_pwd_dir_length 0
+    echo
+    set_color yellow
+    echo -n (whoami)
+    set_color white
+    echo -n "@"
+    set_color green
+    echo -n (hostname -s)
+    set_color white
+    echo -n ": "
+    set_color blue
+    echo -n (prompt_pwd)
+    set_color normal
+    echo
+    if test $last_status -eq 0
+        set_color --bold green
+    else
+        set_color --bold red
+    end
+    echo -n "▸"
+    set_color normal
+    echo -n " "
+end
+EOF
+  
+  # Устанавливаем владельца и права
+  chown -R "$owner:$owner" "$fish_dir"
+  chmod 755 "$fish_dir" "$fish_dir/functions"
+  chmod 644 "$prompt_file"
+  echo "  • Fish prompt настроен для $owner"
+}
+
+install_fish_prompt "$ORIG_HOME" "$ORIG_USER"
+install_fish_prompt "/root" "root"
+
 echo -e "\n🎉 Установка завершена!\n" \
-     "• Новый prompt заработает при следующем интерактивном shell.\n" \
-     "• Алиасы ll/la/l добавлены для '$ORIG_USER' и root.\n" \
-     "• Конфиги mc и tmux сконфигурированы.\n\n" \
-     "Чтобы применить сейчас, выполните:\n" \
+     "• Новый prompt для bash и fish настроен\n" \
+     "• Алиасы ll/la/l добавлены для '$ORIG_USER' и root\n" \
+     "• Настройки автодополнения добавлены в .bashrc\n" \
+     "• Конфиги mc и tmux сконфигурированы\n" \
+     "• Fish с настроенным промптом установлен\n\n" \
+     "Чтобы применить настройки bash, выполните:\n" \
      "    source /etc/bashrc && source ~/.bashrc\n" \
-     "или просто откройте новый терминал/SSH-сессию."
+     "Для использования fish просто введите 'fish' в терминале."
