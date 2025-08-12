@@ -72,15 +72,39 @@ else
   echo "bash-completion уже установлен"
 fi
 
-echo "=== Шаг 4.1: установка tmux ==="
+# --- ДОБАВЛЕНО: Настройка автодополнения в .bashrc ---
+echo "=== Шаг 4.1: настройка автодополнения в .bashrc ==="
+add_bashrc_settings() {
+  local bashrc_file="$1"
+  local owner="$2"
+  
+  # Проверяем, не добавлены ли уже настройки
+  if ! grep -q "history-search-backward" "$bashrc_file"; then
+    echo "" >> "$bashrc_file"
+    echo "# Авто-дополнение при вводе (добавлено скриптом)" >> "$bashrc_file"
+    echo 'bind '\''"\e[A": history-search-backward'\''   # Стрелка вверх' >> "$bashrc_file"
+    echo 'bind '\''"\e[B": history-search-forward'\''    # Стрелка вниз' >> "$bashrc_file"
+    echo 'bind '\''"\t": menu-complete'\''               # Tab для циклического выбора' >> "$bashrc_file"
+    chown "$owner:$owner" "$bashrc_file"
+    echo "✅ Настройки автодополнения добавлены в $bashrc_file"
+  else
+    echo "ℹ️ Настройки автодополнения уже присутствуют в $bashrc_file"
+  fi
+}
+
+# Добавляем настройки для обычного пользователя и root
+add_bashrc_settings "$ORIG_HOME/.bashrc" "$ORIG_USER"
+add_bashrc_settings "/root/.bashrc" "root"
+
+echo "=== Шаг 4.2: установка tmux ==="
 if ! rpm -q tmux &>/dev/null; then
   dnf install -y tmux
 else
   echo "tmux уже установлен"
 fi
 
-# 4.2) Автодополнение tmux (system-wide)
-echo "=== Шаг 4.2: установка автодополнения для tmux ==="
+# 4.3) Автодополнение tmux (system-wide)
+echo "=== Шаг 4.3: установка автодополнения для tmux ==="
 COMPDIR="/usr/share/bash-completion/completions"
 mkdir -p "$COMPDIR"
 curl -fsSL https://raw.githubusercontent.com/imomaliev/tmux-bash-completion/master/completions/tmux \
@@ -103,13 +127,85 @@ echo "=== Шаг 5: настройка tmux ==="
 install_tmux_conf "$ORIG_HOME" "$ORIG_USER"
 install_tmux_conf "/root" "root"
 
-echo "=== Шаг 6: устасновка дополнительных утилит ==="
-dnf install -y epel-release
+# --- ДОБАВЛЕНО: Установка и настройка Fish ---
+echo "=== Шаг 6: установка epel-release и fish ==="
+
+# Сначала устанавливаем EPEL
+if ! rpm -q epel-release &>/dev/null; then
+  dnf install -y epel-release
+  echo "✅ EPEL репозиторий добавлен"
+  # Обновляем кэш после добавления репозитория
+  dnf makecache --refresh
+else
+  echo "ℹ️ EPEL репозиторий уже установлен"
+fi
+
+# Теперь устанавливаем fish
+if ! rpm -q fish &>/dev/null; then
+  dnf install -y fish
+  echo "✅ Fish установлен"
+else
+  echo "ℹ️ Fish уже установлен"
+fi
+
+# Функция для установки fish_prompt
+install_fish_prompt() {
+  local home_dir="$1"
+  local owner="$2"
+  local fish_dir="$home_dir/.config/fish"
+  local prompt_file="$fish_dir/functions/fish_prompt.fish"
+  
+  # Создаем необходимые директории
+  mkdir -p "$fish_dir/functions"
+  
+  # Создаем файл с промптом
+  cat > "$prompt_file" <<'EOF'
+function fish_prompt
+    set -l last_status $status
+    set -g fish_prompt_pwd_dir_length 0
+    echo
+    set_color yellow
+    echo -n (whoami)
+    set_color white
+    echo -n "@"
+    set_color green
+    echo -n (hostname -s)
+    set_color white
+    echo -n ": "
+    set_color blue
+    echo -n (prompt_pwd)
+    set_color normal
+    echo
+    if test $last_status -eq 0
+        set_color --bold green
+    else
+        set_color --bold red
+    end
+    echo -n "▸"
+    set_color normal
+    echo -n " "
+end
+EOF
+  
+  # Устанавливаем владельца и права
+  chown -R "$owner:$owner" "$fish_dir"
+  chmod 755 "$fish_dir" "$fish_dir/functions"
+  chmod 644 "$prompt_file"
+  echo "✅ Fish prompt настроен для $owner"
+}
+
+echo "=== Шаг 6.1: настройка fish_prompt ==="
+install_fish_prompt "$ORIG_HOME" "$ORIG_USER"
+install_fish_prompt "/root" "root"
+
+echo "=== Шаг 7: установка дополнительных утилит ==="
 dnf install -y ncdu bmon traceroute htop zip unzip wget
 
 echo -e "\n🎉 Готово! Пользователь '$ORIG_USER' и root получили:\n" \
      "- цветной prompt [user@host] /path\n" \
+     "- настройки автодополнения в .bashrc\n" \
      "- mc с конфигами\n" \
-     "- bash-completion, tmux и его автодополнение + конфиги\n\n" \
+     "- bash-completion, tmux и его автодополнение + конфиги\n" \
+     "- fish с настроенным промптом\n" \
+     "- дополнительные утилиты (ncdu, bmon и др.)\n\n" \
      "Откройте новый login shell или выполните 'source /etc/profile.d/custom-prompt.sh' и 'source ~/.bashrc'."
-
