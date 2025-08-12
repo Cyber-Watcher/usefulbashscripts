@@ -20,7 +20,7 @@ UBUNTU_VERSION=$(lsb_release -rs)
 echo "=== Шаг 1: обновление и установка базовых пакетов ==="
 apt update && apt upgrade -y
 apt install -y iputils-ping iputils-tracepath traceroute unzip zip mc nano tmux \
-               cron bash-completion less ncdu fzf bmon tldr curl
+               cron bash-completion less ncdu fzf bmon tldr curl fish
 
 echo "=== Шаг 2: установка eza/exa и определение LS_TOOL ==="
 if dpkg --compare-versions "$UBUNTU_VERSION" ge "24.04"; then
@@ -37,7 +37,6 @@ fi
 patch_bashrc() {
   local TARGET_RC="$1"
   # Заменяем ls на eza/exa
-  #sed -i "s|ls --color=auto|${LS_TOOL}|g"        "$TARGET_RC"
   sed -i "s|ls -alF|${LS_TOOL} -lag|g"           "$TARGET_RC"
   sed -i "s|ls -A|ls -lA|g"           "$TARGET_RC"
   sed -i "s|ls -CF|ls|g"           "$TARGET_RC"
@@ -98,5 +97,79 @@ EOF
 chmod 644 /etc/profile.d/force-color-prompt.sh
 echo "✅ /etc/profile.d/force-color-prompt.sh создан."
 
+# --- Шаг 6: Добавление настроек автодополнения в .bashrc ---
+echo "=== Шаг 6: Добавление настроек автодополнения в .bashrc ==="
+add_bashrc_settings() {
+  local bashrc_file="$1"
+  local owner="$2"
+  
+  # Проверяем, не добавлены ли уже настройки
+  if ! grep -q "history-search-backward" "$bashrc_file"; then
+    echo "" >> "$bashrc_file"
+    echo "# Авто-дополнение при вводе (добавлено скриптом)" >> "$bashrc_file"
+    echo 'bind '\''"\e[A": history-search-backward'\''   # Стрелка вверх' >> "$bashrc_file"
+    echo 'bind '\''"\e[B": history-search-forward'\''    # Стрелка вниз' >> "$bashrc_file"
+    echo 'bind '\''"\t": menu-complete'\''               # Tab для циклического выбора' >> "$bashrc_file"
+    chown "$owner:$owner" "$bashrc_file"
+    echo "  • Настройки автодополнения добавлены в $bashrc_file"
+  else
+    echo "  ℹ️ Настройки автодополнения уже присутствуют в $bashrc_file"
+  fi
+}
+
+add_bashrc_settings "$ORIG_HOME/.bashrc" "$ORIG_USER"
+add_bashrc_settings "/root/.bashrc" "root"
+
+# --- Шаг 7: Настройка fish_prompt ---
+echo "=== Шаг 7: Настройка fish_prompt ==="
+install_fish_prompt() {
+  local home_dir="$1"
+  local owner="$2"
+  local fish_dir="$home_dir/.config/fish"
+  local prompt_file="$fish_dir/functions/fish_prompt.fish"
+  
+  # Создаем необходимые директории
+  mkdir -p "$fish_dir/functions"
+  
+  # Создаем файл с промптом
+  cat > "$prompt_file" <<'EOF'
+function fish_prompt
+    set -l last_status $status
+    set -g fish_prompt_pwd_dir_length 0
+    echo
+    set_color yellow
+    echo -n (whoami)
+    set_color white
+    echo -n "@"
+    set_color green
+    echo -n (hostname -s)
+    set_color white
+    echo -n ": "
+    set_color blue
+    echo -n (prompt_pwd)
+    set_color normal
+    echo
+    if test $last_status -eq 0
+        set_color --bold green
+    else
+        set_color --bold red
+    end
+    echo -n "▸"
+    set_color normal
+    echo -n " "
+end
+EOF
+  
+  # Устанавливаем владельца и права
+  chown -R "$owner:$owner" "$fish_dir"
+  chmod 755 "$fish_dir" "$fish_dir/functions"
+  chmod 644 "$prompt_file"
+  echo "  • Fish prompt настроен для $owner"
+}
+
+install_fish_prompt "$ORIG_HOME" "$ORIG_USER"
+install_fish_prompt "/root" "root"
+
 echo -e "\nГотово! Настройки применены для пользователя '$ORIG_USER' и для 'root'."
 echo    "Перезапустите терминал или выполните 'source ~/.bashrc'."
+echo    "Для использования fish просто введите 'fish' в терминале."
