@@ -23,7 +23,7 @@ ORIG_HOME=$(getent passwd "$ORIG_USER" | cut -d: -f6)
 echo "=== Шаг 1: Обновление системы и установка пакетов ==="
 dnf makecache --refresh -y
 dnf update -y
-dnf install -y tmux ncdu bmon traceroute htop eza wget unzip zip curl fish
+dnf install -y tmux ncdu bmon traceroute htop eza wget unzip zip curl fish bash-completion
 
 # 2) Патчим /etc/bashrc — бэкап + override PS1
 BRC=/etc/bashrc
