@@ -20,7 +20,7 @@ UBUNTU_VERSION=$(lsb_release -rs)
 echo "=== Шаг 1: обновление и установка базовых пакетов ==="
 apt update && apt upgrade -y
 apt install -y iputils-ping iputils-tracepath traceroute unzip zip mc nano tmux \
-               cron bash-completion less ncdu fzf bmon tldr curl fish
+               cron bash-completion less ncdu fzf bmon tldr curl fish sysstat
 
 echo "=== Шаг 2: установка eza/exa и определение LS_TOOL ==="
 if dpkg --compare-versions "$UBUNTU_VERSION" ge "24.04"; then
@@ -51,11 +51,9 @@ patch_bashrc() {
 echo "=== Шаг 3: настройка для пользователя $ORIG_USER ==="
 patch_bashrc "$ORIG_HOME/.bashrc"
 
-# tmux конфиг
-cat > "$ORIG_HOME/.tmux.conf" <<'EOF'
-set -g default-terminal "screen-256color"
-set -g mouse on
-EOF
+# tmux config для пользователя
+curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/refs/heads/main/tmux/base_server.config \
+     -o "$ORIG_HOME/.tmux.conf"
 chown "$ORIG_USER:$ORIG_USER" "$ORIG_HOME/.tmux.conf"
 chmod 660 "$ORIG_HOME/.tmux.conf"
 
@@ -73,12 +71,9 @@ chown -R "$ORIG_USER:$ORIG_USER" "$ORIG_HOME/.config"
 echo "=== Шаг 4: настройка для пользователя root ==="
 patch_bashrc "/root/.bashrc"
 
-# tmux конфиг для root
-cat > /root/.tmux.conf <<'EOF'
-set -g default-terminal "screen-256color"
-set -g mouse on
-EOF
-chmod 600 /root/.tmux.conf
+# tmux confog для root
+cp "$ORIG_HOME/.tmux.conf" /root/.tmux.conf
+chmod 600 /root/.tmux.conf 
 
 # mc конфиг для root
 mkdir -p /root/.config/mc
