@@ -171,6 +171,33 @@ EOF
 install_fish_prompt "$ORIG_HOME" "$ORIG_USER"
 install_fish_prompt "/root" "root"
 
+# --- Шаг 8: Автоподключение к tmux при SSH-сессии ---
+echo "=== Шаг 8: Добавление автоподключения к tmux при SSH ==="
+add_tmux_autostart() {
+  local bashrc_file="$1"
+  local owner="$2"
+  local tmux_block='
+if [[ -n "$SSH_CONNECTION" ]] && [[ -z "$TMUX" ]] && [[ $- == *i* ]]; then
+    if tmux has-session -t itpro 2>/dev/null; then
+        tmux attach -t itpro
+    else
+        tmux new -s itpro
+    fi
+fi
+'
+  if ! grep -q "tmux attach -t itpro" "$bashrc_file"; then
+    echo -e "\n# Автоподключение к tmux при SSH" >> "$bashrc_file"
+    echo "$tmux_block" >> "$bashrc_file"
+    chown "$owner:$owner" "$bashrc_file"
+    echo "  • Блок автоподключения добавлен в $bashrc_file"
+  else
+    echo "  ℹ️ Блок автоподключения уже есть в $bashrc_file"
+  fi
+}
+
+add_tmux_autostart "$ORIG_HOME/.bashrc" "$ORIG_USER"
+add_tmux_autostart "/root/.bashrc" "root"
+
 echo -e "\nГотово! Настройки применены для пользователя '$ORIG_USER' и для 'root'."
 echo    "Перезапустите терминал или выполните 'source ~/.bashrc'."
 echo    "Для использования fish просто введите 'fish' в терминале."
