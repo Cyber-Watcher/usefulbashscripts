@@ -154,6 +154,12 @@ function fish_prompt
     echo -n " "
 end
 EOF
+
+  # Устанавливаем цвета для fish
+  curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/refs/heads/main/fish/fish_variables_for_server \
+     -o "$fish_dir/fish_variables"
+
+  echo "  Цвета Fish настроены для $owner"  
   
   # Устанавливаем владельца и права
   chown -R "$owner:$owner" "$fish_dir"
