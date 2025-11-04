@@ -101,7 +101,7 @@ add_bashrc_settings() {
   # Проверяем, не добавлены ли уже настройки
   if ! grep -q "history-search-backward" "$bashrc_file"; then
     echo "" >> "$bashrc_file"
-    echo "# Авто-дополнение при вводе (добавлено скриптом)" >> "$bashrc_file"
+    echo "# Авто-дополнение при вводе" >> "$bashrc_file"
     echo 'bind '\''"\e[A": history-search-backward'\''   # Стрелка вверх' >> "$bashrc_file"
     echo 'bind '\''"\e[B": history-search-forward'\''    # Стрелка вниз' >> "$bashrc_file"
     echo 'bind '\''"\t": menu-complete'\''               # Tab для циклического выбора' >> "$bashrc_file"
