@@ -74,7 +74,7 @@ install_mc_ini_local() {
 
   if [ -f "$SRC_PATH/ini" ]; then
     cp -f "$SRC_PATH/ini" "$HOME_DIR/.config/mc/ini"
-    chown -R "$USER:$USER" "$HOME_DIR/.config/mc"
+    chown -R "$USER:$USER" "$HOME_DIR/.config"
     echo "  • mc.ini для $USER установлен из $SRC_PATH"
   else
     echo "  ! Не найден файл $SRC_PATH/ini (пропускаем)"
