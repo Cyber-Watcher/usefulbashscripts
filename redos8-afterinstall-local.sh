@@ -100,13 +100,15 @@ install_tmux_conf_local() {
   local USER=$2
 
   mkdir -p "$HOME_DIR"
-  if [ -f "$BASE_DIR/tmux/base_server.config" ]; then
-    cp -f "$BASE_DIR/tmux/base_server.config" "$HOME_DIR/.tmux.conf"
+  if [ -f "$BASE_DIR/tmux/base_server_with_base_plugings.config" ]; then
+    cp -f "$BASE_DIR/tmux/base_server_with_base_plugings.config" "$HOME_DIR/.tmux.conf"
+    cp -rf "$BASE_DIR/tmux/.tmux" "$HOME_DIR"
     chown "$USER:$USER" "$HOME_DIR/.tmux.conf"
+    chown -R "$USER:$USER" "$HOME_DIR/.tmux"
     chmod 660 "$HOME_DIR/.tmux.conf"
     echo "  • .tmux.conf для $USER установлен"
   else
-    echo "  ! Не найден $BASE_DIR/tmux/base_server.config"
+    echo "  ! Не найден $BASE_DIR/tmux/base_server_with_base_plugings.config"
   fi
 }
 
