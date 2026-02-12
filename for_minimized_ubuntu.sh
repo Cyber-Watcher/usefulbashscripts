@@ -20,7 +20,8 @@ UBUNTU_VERSION=$(lsb_release -rs)
 echo "=== Шаг 1: обновление и установка базовых пакетов ==="
 apt update && apt upgrade -y
 apt install -y iputils-ping iputils-tracepath traceroute unzip zip mc nano tmux \
-               cron bash-completion less ncdu fzf bmon tldr curl fish sysstat
+               cron bash-completion less ncdu fzf bmon tldr curl fish sysstat \
+               flake8 yamllint shellcheck btop vim
 
 echo "=== Шаг 2: установка eza/exa и определение LS_TOOL ==="
 if dpkg --compare-versions "$UBUNTU_VERSION" ge "24.04"; then
