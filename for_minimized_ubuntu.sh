@@ -245,5 +245,36 @@ patch_color_settings() {
 patch_color_settings "$ORIG_HOME/.bashrc" "$ORIG_USER"
 patch_color_settings "/root/.bashrc" "root"
 
+# --- Шаг 9 ---
+yellow_echo "=== Шаг 9: Настройка batcat (симлинк и конфиг) ==="
+
+install_bat_settings() {
+    local home_dir="$1"
+    local owner="$2"
+    local bin_dir="$home_dir/bin"
+    local bat_config_dir="$home_dir/.config/bat"
+
+    # Создаем папку ~/bin если её нет
+    mkdir -p "$bin_dir"
+
+    # Создаем симлинк bat -> /usr/bin/batcat
+    # -f нужен, чтобы не вылетала ошибка, если линк уже есть
+    ln -sf /usr/bin/batcat "$bin_dir/bat"
+
+    # Тянем конфиг
+    mkdir -p "$bat_config_dir"
+    curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/refs/heads/main/batcat/config \
+         -o "$bat_config_dir/config"
+
+    # Устанавливаем владельца на конфиг
+    chown -R "$owner:$owner" "$bin_dir" "$home_dir/.config"
+    
+    yellow_echo "  • batсat (simlink bat) настроен для $owner"
+}
+
+# Применяем для пользователя и root
+install_bat_settings "$ORIG_HOME" "$ORIG_USER"
+install_bat_settings "/root" "root"
+
 yellow_echo "\nГотово! Настройки применены."
 yellow_echo "Перезапустите терминал или выполните 'source ~/.bashrc'."
