@@ -21,7 +21,7 @@ echo "=== Шаг 1: обновление и установка базовых п
 apt update && apt upgrade -y
 apt install -y iputils-ping iputils-tracepath traceroute unzip zip mc nano tmux \
                cron bash-completion less ncdu fzf bmon tldr curl fish sysstat \
-               flake8 yamllint shellcheck btop vim
+               flake8 yamllint shellcheck btop vim bat
 
 echo "=== Шаг 2: установка eza/exa и определение LS_TOOL ==="
 if dpkg --compare-versions "$UBUNTU_VERSION" ge "24.04"; then
@@ -200,7 +200,7 @@ add_tmux_autostart "$ORIG_HOME/.bashrc" "$ORIG_USER"
 add_tmux_autostart "/root/.bashrc" "root"
 
 # --- Шаг 9: Установка Vim "Золотой стандарт v1.19" ---
-echo "=== Шаг 9: Настройка Vim (DARK SANDS v1.19) ==="
+echo "=== Шаг 9: Настройка Vim (DARK SANDS) ==="
 
 install_vim_standard() {
   local home_dir="$1"
