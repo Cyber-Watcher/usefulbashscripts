@@ -1,9 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-# Проверяем, что запущено через sudo
+yellow_echo() {
+    echo -e "\033[1;33m$1\033[0m"
+}
+
 if [ -z "${SUDO_USER:-}" ]; then
-  echo "Ошибка: скрипт нужно запускать через sudo."
+  yellow_echo "Ошибка: скрипт нужно запускать через sudo."
   exit 1
 fi
 
@@ -17,21 +20,21 @@ ORIG_HOME=$(getent passwd "$ORIG_USER" | cut -d: -f6)
 # Определяем версию Ubuntu
 UBUNTU_VERSION=$(lsb_release -rs)
 
-echo "=== Шаг 1: обновление и установка базовых пакетов ==="
+yellow_echo "=== Шаг 1: обновление и установка базовых пакетов ==="
 apt update && apt upgrade -y
 apt install -y iputils-ping iputils-tracepath traceroute unzip zip mc nano tmux \
                cron bash-completion less ncdu fzf bmon tldr curl fish sysstat \
                flake8 yamllint shellcheck btop vim bat
 
-echo "=== Шаг 2: установка eza/exa и определение LS_TOOL ==="
+yellow_echo "=== Шаг 2: установка eza/exa и определение LS_TOOL ==="
 if dpkg --compare-versions "$UBUNTU_VERSION" ge "24.04"; then
     apt install -y eza
     LS_TOOL="eza"
-    echo "Будем использовать eza"
+    yellow_echo "Будем использовать eza"
 else
     apt install -y exa
     LS_TOOL="exa"
-    echo "Будем использовать exa"
+    yellow_echo "Будем использовать exa"
 fi
 
 # Функция для применения общих правок .bashrc
@@ -48,8 +51,8 @@ patch_bashrc() {
     || echo "source /etc/profile.d/bash_completion.sh" >> "$TARGET_RC"
 }
 
-# --- Настройка для оригинального пользователя ---
-echo "=== Шаг 3: настройка для пользователя $ORIG_USER ==="
+# --- Шаг 3: Настройка для оригинального пользователя ---
+yellow_echo "=== Шаг 3: настройка для пользователя $ORIG_USER ==="
 patch_bashrc "$ORIG_HOME/.bashrc"
 
 # tmux config для пользователя
@@ -68,8 +71,8 @@ curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/mai
      -o "$ORIG_HOME/.config/mc/ini"
 chown -R "$ORIG_USER:$ORIG_USER" "$ORIG_HOME/.config"
 
-# --- Настройка для root ---
-echo "=== Шаг 4: настройка для пользователя root ==="
+# --- Шаг 4: Настройка для root ---
+yellow_echo "=== Шаг 4: настройка для пользователя root ==="
 patch_bashrc "/root/.bashrc"
 
 # tmux confog для root
@@ -83,7 +86,7 @@ curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/mai
 chown -R root:root /root/.config
 
 # --- Шаг 5: Принудительное включение цветного prompt в login-shell ---
-echo "=== Шаг 5: создание /etc/profile.d/force-color-prompt.sh ==="
+yellow_echo "=== Шаг 5: создание /etc/profile.d/force-color-prompt.sh ==="
 cat > /etc/profile.d/force-color-prompt.sh << 'EOF'
 # /etc/profile.d/force-color-prompt.sh
 # Принудительно включаем цветной prompt в login-shell
@@ -91,10 +94,10 @@ force_color_prompt=yes
 export force_color_prompt
 EOF
 chmod 644 /etc/profile.d/force-color-prompt.sh
-echo "✅ /etc/profile.d/force-color-prompt.sh создан."
+yellow_echo "✅ /etc/profile.d/force-color-prompt.sh создан."
 
 # --- Шаг 6: Добавление настроек автодополнения в .bashrc ---
-echo "=== Шаг 6: Добавление настроек автодополнения в .bashrc ==="
+yellow_echo "=== Шаг 6: Добавление настроек автодополнения в .bashrc ==="
 add_bashrc_settings() {
   local bashrc_file="$1"
   local owner="$2"
@@ -107,9 +110,9 @@ add_bashrc_settings() {
     echo 'bind '\''"\e[B": history-search-forward'\''    # Стрелка вниз' >> "$bashrc_file"
     echo 'bind '\''"\t": menu-complete'\''               # Tab для циклического выбора' >> "$bashrc_file"
     chown "$owner:$owner" "$bashrc_file"
-    echo "  • Настройки автодополнения добавлены в $bashrc_file"
+    yellow_echo "  • Настройки автодополнения добавлены в $bashrc_file"
   else
-    echo "  ℹ️ Настройки автодополнения уже присутствуют в $bashrc_file"
+    yellow_echo "  ℹ️ Настройки автодополнения уже присутствуют в $bashrc_file"
   fi
 }
 
@@ -117,7 +120,7 @@ add_bashrc_settings "$ORIG_HOME/.bashrc" "$ORIG_USER"
 add_bashrc_settings "/root/.bashrc" "root"
 
 # --- Шаг 7: Настройка fish_prompt ---
-echo "=== Шаг 7: Настройка fish_prompt ==="
+yellow_echo "=== Шаг 7: Настройка fish_prompt ==="
 install_fish_prompt() {
   local home_dir="$1"
   local owner="$2"
@@ -160,20 +163,20 @@ EOF
   curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/refs/heads/main/fish/fish_variables_for_server \
      -o "$fish_dir/fish_variables"
 
-  echo "  Цвета Fish настроены для $owner"  
+  yellow_echo "  Цвета Fish настроены для $owner"  
   
   # Устанавливаем владельца и права
   chown -R "$owner:$owner" "$fish_dir"
   chmod 755 "$fish_dir" "$fish_dir/functions"
   chmod 644 "$prompt_file"
-  echo "  • Fish prompt настроен для $owner"
+  yellow_echo "  • Fish prompt настроен для $owner"
 }
 
 install_fish_prompt "$ORIG_HOME" "$ORIG_USER"
 install_fish_prompt "/root" "root"
 
 # --- Шаг 8: Автоподключение к tmux при SSH-сессии ---
-echo "=== Шаг 8: Добавление автоподключения к tmux при SSH ==="
+yellow_echo "=== Шаг 8: Добавление автоподключения к tmux при SSH ==="
 add_tmux_autostart() {
   local bashrc_file="$1"
   local owner="$2"
@@ -190,9 +193,9 @@ fi
     echo -e "\n# Автоподключение к tmux при SSH" >> "$bashrc_file"
     echo "$tmux_block" >> "$bashrc_file"
     chown "$owner:$owner" "$bashrc_file"
-    echo "  • Блок автоподключения добавлен в $bashrc_file"
+    yellow_echo "  • Блок автоподключения добавлен в $bashrc_file"
   else
-    echo "  ℹ️ Блок автоподключения уже есть в $bashrc_file"
+    yellow_echo "  ℹ️ Блок автоподключения уже есть в $bashrc_file"
   fi
 }
 
@@ -200,7 +203,7 @@ add_tmux_autostart "$ORIG_HOME/.bashrc" "$ORIG_USER"
 add_tmux_autostart "/root/.bashrc" "root"
 
 # --- Шаг 9: Установка Vim ---
-echo "=== Шаг 9: Настройка Vim (DARK SANDS) ==="
+yellow_echo "=== Шаг 9: Настройка Vim (DARK SANDS) ==="
 
 install_vim_standard() {
   local home_dir="$1"
@@ -208,46 +211,38 @@ install_vim_standard() {
   local vimrc_file="$home_dir/.vimrc"
   local undo_dir="$home_dir/.vim/undo-dir"
 
-  # 1. Создаем структуру каталогов заранее, чтобы Vim не выдавал уведомлений
+  # Создаем структуру каталогов заранее, чтобы Vim не выдавал уведомлений
   mkdir -p "$undo_dir"
 
-  # 2. Тянем конфиг из репозитория (как и tmux)
-  # Мы переименовываем vimrc_dark_sands в .vimrc при сохранении
   curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/refs/heads/main/vim/vimrc_dark_sands \
        -o "$vimrc_file"
 
-  # 3. Устанавливаем права и владельца
   chown -R "$owner:$owner" "$home_dir/.vim" "$vimrc_file"
   chmod 644 "$vimrc_file"
   
-  echo "  • Vim DARK SANDS подтянут и настроен для $owner"
+  yellow_echo "  • Vim DARK SANDS подтянут и настроен для $owner"
 }
 
-# Применяем для основного пользователя и root
 install_vim_standard "$ORIG_HOME" "$ORIG_USER"
 install_vim_standard "/root" "root"
 
-# --- Шаг 10: Настройка True Color (Строгая проверка) ---
-echo "=== Шаг 10: Настройка True Color в .bashrc ==="
+# --- Шаг 10: Настройка True Color ---
+yellow_echo "=== Шаг 10: Настройка True Color в .bashrc ==="
 
 patch_color_settings() {
   local bashrc_file="$1"
   local owner="$2"
   
-  # Используем ^export, чтобы искать только активную команду, а не упоминание в тексте
+  # Проверяем наличие, чтобы не добавлять повторно при перезапуске скрипта
   if ! grep -q "^export COLORTERM=truecolor" "$bashrc_file"; then
     
-    # Вставляем сразу после первого esac (блок интерактивности)
-    # Используем упрощенный синтаксис для вставки
-    sed -i '/esac/a \
-\
-export COLORTERM=truecolor\
-export TERM=xterm-256color' "$bashrc_file"
+    # 0,/esac/ заставляет sed сработать ТОЛЬКО на первом найденном esac
+    sed -i '0,/esac/s/esac/esac\n\nexport COLORTERM=truecolor\nexport TERM=xterm-256color/' "$bashrc_file"
     
     chown "$owner:$owner" "$bashrc_file"
-    echo "  • True Color добавлен в $bashrc_file"
+    yellow_echo "  • True Color добавлен в начало $bashrc_file"
   else
-    echo "  ℹ️ Настройки True Color уже активны в $bashrc_file"
+    yellow_echo "  ℹ️ Настройки True Color уже активны в $bashrc_file"
   fi
 }
 
@@ -255,6 +250,6 @@ patch_color_settings "$ORIG_HOME/.bashrc" "$ORIG_USER"
 patch_color_settings "/root/.bashrc" "root"
 
 
-echo -e "\nГотово! Настройки применены для пользователя '$ORIG_USER' и для 'root'."
-echo    "Перезапустите терминал или выполните 'source ~/.bashrc'."
-echo    "Для использования fish просто введите 'fish' в терминале."
+yellow_echo    "\nГотово! Настройки применены для пользователя '$ORIG_USER' и для 'root'."
+yellow_echo    "Перезапустите терминал или выполните 'source ~/.bashrc'."
+yellow_echo    "Для использования fish просто введите 'fish' в терминале."
