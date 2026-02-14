@@ -199,7 +199,7 @@ fi
 add_tmux_autostart "$ORIG_HOME/.bashrc" "$ORIG_USER"
 add_tmux_autostart "/root/.bashrc" "root"
 
-# --- Шаг 9: Установка Vim "Золотой стандарт v1.19" ---
+# --- Шаг 9: Установка Vim ---
 echo "=== Шаг 9: Настройка Vim (DARK SANDS) ==="
 
 install_vim_standard() {
@@ -227,40 +227,33 @@ install_vim_standard() {
 install_vim_standard "$ORIG_HOME" "$ORIG_USER"
 install_vim_standard "/root" "root"
 
-# --- Шаг 10: Настройка цветопередачи терминала (БЕЗ АРТЕФАКТОВ) ---
+# --- Шаг 10: Настройка True Color (Строгая проверка) ---
 echo "=== Шаг 10: Настройка True Color в .bashrc ==="
 
 patch_color_settings() {
   local bashrc_file="$1"
   local owner="$2"
   
-  # Оборачиваем в проверку на интерактивность [[ $- == *i* ]]
-  # Это уберет мусор (артефакты) при логине
-  local color_block='
-# Включение True Color только для интерактивных сессий
-if [[ $- == *i* ]]; then
-    export COLORTERM=truecolor
-    export TERM=xterm-256color
-fi
-'
-
-  if ! grep -q "COLORTERM=truecolor" "$bashrc_file"; then
-    if grep -q "set a fancy prompt" "$bashrc_file"; then
-      # Используем временный файл для чистой вставки блока
-      sed -i "/# set a fancy prompt/i $color_block" "$bashrc_file"
-      echo "  • True Color настройки добавлены в $bashrc_file"
-    else
-      echo -e "$color_block" >> "$bashrc_file"
-      echo "  • Маркер не найден, настройки добавлены в конец $bashrc_file"
-    fi
+  # Используем ^export, чтобы искать только активную команду, а не упоминание в тексте
+  if ! grep -q "^export COLORTERM=truecolor" "$bashrc_file"; then
+    
+    # Вставляем сразу после первого esac (блок интерактивности)
+    # Используем упрощенный синтаксис для вставки
+    sed -i '/esac/a \
+\
+export COLORTERM=truecolor\
+export TERM=xterm-256color' "$bashrc_file"
+    
     chown "$owner:$owner" "$bashrc_file"
+    echo "  • True Color добавлен в $bashrc_file"
   else
-    echo "  ℹ️ Настройки True Color уже присутствуют в $bashrc_file"
+    echo "  ℹ️ Настройки True Color уже активны в $bashrc_file"
   fi
 }
 
 patch_color_settings "$ORIG_HOME/.bashrc" "$ORIG_USER"
 patch_color_settings "/root/.bashrc" "root"
+
 
 echo -e "\nГотово! Настройки применены для пользователя '$ORIG_USER' и для 'root'."
 echo    "Перезапустите терминал или выполните 'source ~/.bashrc'."
