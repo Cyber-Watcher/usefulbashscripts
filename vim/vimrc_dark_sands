@@ -1,0 +1,323 @@
+" ================ Only the DARK SAND and nothing else =====================
+" DARK SANDS (Тёмные пески) — v1.19
+" Автор: cyberwatcher
+" Фишки:
+" * Не тербует ни каких дополнительных плагинов
+" * Отображает скрытые символы (полезно для yaml, bash и т.п.)
+" * Отключение/включение видимости скрытых символов по F4
+" * При октрытии файла возвращает курсор в позицию последнего редактирования
+" * Красивая подстветка поиска с авто прокруткой и установкой фокуса
+" * Информативный статуслайн
+" * Сохранение в любых режимах по Ctrl+s
+" * Навигация в INSERT: Ctrl+a/e (края), Ctrl+f/b (прыжки по словам)
+" * Авто очистка пробелов в конце строк при сохранении файла
+" * Переключение абсолютная/относительная нумерация строк по F3
+" * Включение/отключение режима PASTE (set paste/set nopaste) по F2
+" * Быстрый выход по двум запятым ,,
+" * (F5 - Undo, F6 - Redo) работающие во всех режимах с вечной памятью
+" * линтинг кода при сохранении (bash, python, yaml, json)
+"   с управлением через Ctrl+F9 - переход в окно ошибок / F10 - закрыть окно
+"   подстветка запрещенных TAB в YAML на лету
+"   Для линтинга требуется установка линтеров
+"   в Ubuntu: sudo apt install flake8 yamllint shellcheck -y
+" ==========================================================================
+
+" --- VIM CORE ---
+set nocompatible                 " Отключаем режим совместимости с vi
+scriptencoding utf-8             " Указываем кодировку файла конфигурации
+set encoding=utf-8               " Внутренняя кодировка текста
+set termguicolors                " Включаем 24-bit True Color для глубоких цветов
+let mapleader = ","              " Переназначение клавиши лидера на запятую ,
+
+" --- СИНТАКСИС И ТИПЫ ФАЙЛОВ ---
+syntax on                        " Включить подсветку синтаксиса
+filetype plugin indent on        " Авто-определение типа файла и умные отступы
+
+" --- БАЗОВЫЙ ИНТЕРФЕЙС ---
+set number                       " Показываем номера строк слева
+set mouse=a                      " Включить поддержку мыши (скролл и клики)
+set laststatus=2                 " Statusline всегда виден внизу
+set noshowmode                   " Не дублируем режим, он есть в статуслайне
+set noruler                      " Убираем стандартную инфо-строку Vim
+set noshowcmd                    " Не показывать вводимые команды внизу
+set shortmess+=F                 " Сокращаем системные уведомления о файлах
+
+" --- НЕВИДИМЫЕ СИМВОЛЫ (ЦВЕТ #504945) ---
+set list                         " Включить визуализацию скрытых символов
+" tab: стрелка, trail: точка, space: точка, eol: символ возврата каретки
+let &listchars = "tab:▸ ,trail:·,space:·,eol:↵"
+
+" --- КУРСОР И НАВИГАЦИЯ (БЕЗ ПОДЧЕРКИВАНИЙ) ---
+set cursorline                   " Подсветка текущей строки
+set nocursorcolumn               " Отключить вертикальную полосу для скорости
+set showmatch                    " Подсвечивать парные скобки
+set matchtime=2                  " Время подсветки скобок (в десятых долях сек)
+
+" --- ОТСТУПЫ (YAML, TOML, BASH) ---
+set expandtab                    " Превращать Tab в пробелы
+set tabstop=2                    " Визуальная ширина табуляции — 2 пробела
+set shiftwidth=2                 " Ширина автоматического отступа
+set softtabstop=2                " Поведение клавиши Backspace при пробелах
+set autoindent                   " Сохранять отступ предыдущей строки
+set smartindent                  " Умные отступы для структур кода
+
+" --- ФАЙЛЫ И АВТОКОМАНДЫ ---
+set hidden                       " Позволить переключать буферы без сохранения
+set nobackup                     " Не создавать файлы .bak
+set nowritebackup                " Не создавать временные файлы при сохранении
+set noswapfile                   " Не создавать swap-файлы (.swp)
+
+" АВТОМАТИЧЕСКАЯ ОЧИСТКА ПРОБЕЛОВ В КОНЦЕ СТРОК ПРИ СОХРАНЕНИИ
+autocmd BufWritePre * :%s/\s\+$//e
+
+" --- УМНАЯ СИСТЕМА ОТМЕН (UNDO & REDO) ---
+set undolevels=1000
+set undoreload=10000
+set undofile
+
+" Указываем путь к папке
+let s:target_undodir = expand('~/.vim/undo-dir')
+
+" Проверка и автоматическое создание каталога
+if !isdirectory(s:target_undodir)
+    " Попытка создать каталог (флаг 'p' создает всю цепочку)
+    call mkdir(s:target_undodir, 'p', 0700)
+
+    " Финальная проверка: удалось ли создать?
+    if isdirectory(s:target_undodir)
+        echo "Vim: Created undo directory in " . s:target_undodir
+    else
+        echoerr "Vim: FAILED to create undo directory! Check permissions."
+    endif
+endif
+
+" Применяем путь к настройкам Vim
+let &undodir = s:target_undodir
+
+" ГРАНУЛЯРНОСТЬ: Ставим точки отмены на важных символах
+inoremap <Space> <Space><C-g>u
+inoremap <CR> <CR><C-g>u
+inoremap . .<C-g>u
+inoremap , ,<C-g>u
+inoremap ! !<C-g>u
+inoremap ? ?<C-g>u
+
+" БЕЗОПАСНЫЕ ХОТКЕИ (F5 - Undo, F6 - Redo)
+" Работают во всех режимах
+nnoremap <F5> u
+inoremap <F5> <C-o>u
+vnoremap <F5> <Esc>ugv
+
+nnoremap <F6> <C-r>
+inoremap <F6> <C-o><C-r>
+vnoremap <F6> <Esc><C-r>gv
+
+" --- ЦВЕТОВАЯ СХЕМА: DARK SANDS (Тёмные пески) ---
+set background=dark
+hi clear
+syntax reset
+let g:colors_name="dark_sands"
+
+" Базовые цвета интерфейса
+hi Normal         guifg=#ebdbb2 guibg=#282828   " Первый парамер цвет основного текста, вотрой фон
+hi Comment        guifg=#928374 gui=italic
+
+" ТВОИ ЦВЕТА СИНТАКСИСА:
+hi Statement      guifg=#eda366 gui=NONE        " if, then, else, fi (светло-оранжевый)
+hi Conditional    guifg=#eda366 gui=NONE        " Условные операторы
+hi Repeat         guifg=#eda366 gui=NONE        " Циклы for, while
+hi Operator       guifg=#e8af80 gui=NONE        " Операторы &&, ||, == (персиковый)
+
+" Остальной синтаксис
+hi Constant       guifg=#d3869b                " Числа и константы (пурпурный)
+hi String         guifg=#b8bb26                " Строки (зеленый)
+hi Identifier     guifg=#83a598                " Переменные (голубой/аква)
+hi Type           guifg=#fabd2f                " Типы данных (желтый)
+hi Special        guifg=#fe8019                " Спецсимволы
+hi PreProc        guifg=#8ec07c                " Препроцессор и Include
+
+" --- ПОДСВЕТКА ТЕКУЩЕЙ СТРОКИ ---
+" Установлен цвет #32302f — он темнее стандартного, почти сливается с фоном
+hi CursorLine     guibg=#32302f gui=NONE cterm=NONE
+
+" Номер текущей строки
+hi LineNr         guifg=#7c6f64 guibg=#282828
+hi CursorLineNr   guifg=#ABB099 guibg=#32302f gui=bold cterm=NONE
+
+" НЕВИДИМЫЕ СИМВОЛЫ (Цвет #504945)
+hi Whitespace     guifg=#504945 gui=NONE
+hi SpecialKey     guifg=#504945 gui=NONE
+hi NonText        guifg=#504945 gui=NONE
+
+hi Visual         guibg=#504945 gui=NONE
+hi MatchParen     guifg=#fabd2f guibg=#504945 gui=bold
+
+" --- STATUSLINE — ФИКСИРОВАННЫЙ (БЕЗ ДЕРГАНИЙ) ---
+hi StatusLine     guifg=#ebdbb2 guibg=#3c3836 gui=NONE
+hi StatusLineNC   guifg=#928374 guibg=#282828 gui=NONE
+
+" Цвета для режимов
+hi SLModeNormal   guifg=#282828 guibg=#83a598 gui=bold
+hi SLModeInsert   guifg=#282828 guibg=#BDBD84 gui=bold
+hi SLModeVisual   guifg=#282828 guibg=#E3BB56 gui=bold
+hi SLModeReplace  guifg=#282828 guibg=#D69D4D gui=bold
+
+" --- ПЕСОЧНЫЕ ЦВЕТА СТАТУСЛАЙНА ---
+" Используем гармоничный песочный (#d5c4a1)
+hi SLFile         guifg=#d5c4a1 guibg=#45413e
+hi SLInfo         guifg=#bdae93 guibg=#3c3836
+hi SLPaste        guifg=#282828 guibg=#eda366 gui=bold " индикатор режима PASTE (оранжевый)
+
+" --- ГОРЯЧИЕ КЛАВИШИ (KEYBINDINGS) ---
+" Быстрое сохранение по Ctrl+S в Normal, Insert и Visual режимах
+nnoremap <C-s> :w<CR>
+inoremap <C-s> <Esc>:w<CR>a
+vnoremap <C-s> <Esc>:w<CR>gv
+
+" ----- НАВИГАЦИЯ В РЕЖИМЕ ВСТАВКИ в стиле bash -----
+" Прыжки по словам: Ctrl+f (вперед), Ctrl+b (назад)
+" ВАЖНО: Ctrl+b может конфликтовать с префиксом tmux!
+inoremap <C-f> <C-o>w
+inoremap <C-b> <C-o>h<C-o>b
+
+" Прыжки: Ctrl+a (начало строки), Ctrl+e (конец строки)
+inoremap <C-a> <Home>
+inoremap <C-e> <End>
+
+" Включение/выключение режима PASTE по F2
+set pastetoggle=<F2>
+
+" Переключение режимов нумерации строк (Абсолютный / Относительный) по F3
+nnoremap <silent> <F3> :set relativenumber!<CR>
+
+" Переключение видимости скрытых символов (tab, space, eol) по F4
+nnoremap <silent> <F4> :set list!<CR>
+inoremap <silent> <F4> <C-o>:set list!<CR>
+vnoremap <silent> <F4> <Esc>:set list!<CR>gv
+
+" Глобальная переменная для отслеживания режима перед входом в Quickfix
+let g:quikfix_return_to_insert = 0
+
+" Ctrl+F9: Открываем список и запоминаем, если мы были в Insert
+nnoremap <C-F9> :let g:quikfix_return_to_insert = 0<CR>:copen<CR>
+inoremap <C-F9> <Esc>:let g:quikfix_return_to_insert = 1<CR>:copen<CR>
+
+" Ctrl+F10 Закрыть список ошибок
+nnoremap <C-F10> :cclose<CR>
+inoremap <C-F10> <Esc>:cclose<CR>
+
+" Быстрый выход без сохранения: дважды нажать запятую
+nnoremap <leader><leader> :q!<CR>
+inoremap <leader><leader> <Esc>:q!<CR>
+
+" --- ДОПОЛНИТЕЛЬНЫЕ УДОБСТВА (NATIVE FEATURES) ---
+set ignorecase smartcase   " Умный поиск
+set incsearch              " Живой поиск при наборе
+set scrolloff=8            " Курсор всегда в зоне видимости
+
+" Возврат на ТОЧНОЕ место (строка и символ)
+autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+
+" --- ПОДСВЕТКА ПОИСКА (DARK SANDS) ---
+set hlsearch
+hi Search      guifg=#282828 guibg=#A19F84 gui=NONE
+hi SearchFocus guifg=#282828 guibg=#F88019 gui=bold,underline
+
+function! SearchNext(command) abort
+    let l:save_hl = &hlsearch
+    set nohlsearch
+    try
+        execute 'keepjumps normal! ' . a:command . 'zz'
+        silent! call matchdelete(99)
+        call matchadd('SearchFocus', '\%#'.@/, 10, 99)
+    catch /E486/
+        echo "Не найдено"
+    endtry
+    let &hlsearch = l:save_hl
+endfunction
+
+" Поиск вперед/назад с автоматической центровкой экрана и подсветкой фокуса
+nnoremap <silent> n :call SearchNext('n')<CR>
+nnoremap <silent> N :call SearchNext('N')<CR>
+
+" Чтобы после Enter сразу включался оранжевый фокус
+cnoremap <expr> <CR> getcmdtype() =~ '[/?]' ? '<CR>:set nohlsearch<CR>:call SearchNext("n")<CR>' : '<CR>'
+
+" Очистка подсветки поиска по Esc-Esc
+nnoremap <silent> <Esc><Esc> :noh<CR>:silent! call matchdelete(99)<CR>:echo ""<CR>
+
+" Функция определения режима
+function! ModeLabel() abort
+  let l:m = mode()
+  if l:m ==# 'n'              | return '  NORMAL '
+  elseif l:m ==# 'i'          | return '  INSERT '
+  elseif l:m =~# "[vV\<C-v>]" | return '  VISUAL '
+  elseif l:m ==# 'R'          | return '  REPLACE '
+  else                        | return '  ?  '
+  endif
+endfunction
+
+" Сборка статуслайна
+set statusline=
+set statusline+=%#SLModeNormal#%{mode()=='n'?ModeLabel():''}
+set statusline+=%#SLModeInsert#%{mode()=='i'?ModeLabel():''}
+set statusline+=%#SLModeVisual#%{mode()=~#'[vV\]'?ModeLabel():''}
+set statusline+=%#SLModeReplace#%{mode()=='R'?ModeLabel():''}
+set statusline+=%#SLPaste#%{&paste?'\ [PASTE]':''}
+set statusline+=%#SLFile#\ %f%m%r
+set statusline+=%=
+set statusline+=%#SLInfo#\ %{&fileencoding!=''?&fileencoding:&encoding}
+set statusline+=\ [%{&fileformat}]
+set statusline+=\ %y
+set statusline+=\ %4l:%-3c\ %3p%%
+
+" ==========================================================================
+" БЛОК ЛИНТЕРОВ (BASH, PYTHON, YAML, JSON)
+" ==========================================================================
+function! LintCode() abort
+  let l:winview = winsaveview()
+  let l:ft = &filetype
+  setlocal errorformat&
+  if l:ft ==# 'sh' && executable('shellcheck')
+    setlocal makeprg=shellcheck\ -f\ gcc\ %
+  elseif l:ft ==# 'python' && executable('flake8')
+    setlocal makeprg=flake8\ %
+  elseif (l:ft ==# 'yaml' || l:ft ==# 'yml') && executable('yamllint')
+    setlocal makeprg=yamllint\ -f\ parsable\ %
+  elseif l:ft ==# 'json' && executable('python3')
+    setlocal makeprg=python3\ -m\ json.tool\ %\ /dev/null
+  else
+    return
+  endif
+  silent make!
+  redraw!
+  if len(getqflist()) > 0
+    copen 5
+    wincmd p
+  else
+    cclose
+  endif
+  call winrestview(l:winview)
+endfunction
+
+" Функция для умного перехода из списка ошибок
+function! QuickfixJump() abort
+  .cc
+  normal! zz
+  if g:quikfix_return_to_insert == 1
+    startinsert
+  endif
+endfunction
+
+" Настройка Enter ТОЛЬКО для окна Quickfix
+autocmd FileType qf nnoremap <buffer> <CR> :call QuickfixJump()<CR>
+
+" Запуск линтинга автоматически при сохранении
+autocmd BufWritePost *.sh,*.py,*.yaml,*.yml,*.json call LintCode()
+
+" --- YAML SAFETY (NATIVE) ---
+" Подсветка ТАБОВ в yaml файлах (так как они запрещены)
+autocmd FileType yaml,yml match Error /\t/
+
+" Подсветка слишком длинных строк (более 80 символов) — опционально
+" autocmd FileType yaml,yml 2match ErrorMsg /\%81v.*/
