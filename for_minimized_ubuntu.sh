@@ -199,6 +199,34 @@ fi
 add_tmux_autostart "$ORIG_HOME/.bashrc" "$ORIG_USER"
 add_tmux_autostart "/root/.bashrc" "root"
 
+# --- Шаг 9: Установка Vim "Золотой стандарт v1.19" ---
+echo "=== Шаг 9: Настройка Vim (DARK SANDS v1.19) ==="
+
+install_vim_standard() {
+  local home_dir="$1"
+  local owner="$2"
+  local vimrc_file="$home_dir/.vimrc"
+  local undo_dir="$home_dir/.vim/undo-dir"
+
+  # 1. Создаем структуру каталогов заранее, чтобы Vim не выдавал уведомлений
+  mkdir -p "$undo_dir"
+
+  # 2. Тянем конфиг из репозитория (как и tmux)
+  # Мы переименовываем vimrc_dark_sands в .vimrc при сохранении
+  curl -fsSL https://raw.githubusercontent.com/Cyber-Watcher/usefulbashscripts/refs/heads/main/vim/vimrc_dark_sands \
+       -o "$vimrc_file"
+
+  # 3. Устанавливаем права и владельца
+  chown -R "$owner:$owner" "$home_dir/.vim" "$vimrc_file"
+  chmod 644 "$vimrc_file"
+  
+  echo "  • Vim DARK SANDS подтянут и настроен для $owner"
+}
+
+# Применяем для основного пользователя и root
+install_vim_standard "$ORIG_HOME" "$ORIG_USER"
+install_vim_standard "/root" "root"
+
 echo -e "\nГотово! Настройки применены для пользователя '$ORIG_USER' и для 'root'."
 echo    "Перезапустите терминал или выполните 'source ~/.bashrc'."
 echo    "Для использования fish просто введите 'fish' в терминале."
