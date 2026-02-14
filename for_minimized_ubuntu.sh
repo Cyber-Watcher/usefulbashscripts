@@ -227,31 +227,35 @@ install_vim_standard() {
 install_vim_standard "$ORIG_HOME" "$ORIG_USER"
 install_vim_standard "/root" "root"
 
-# --- Шаг 10: Настройка цветопередачи терминала ---
+# --- Шаг 10: Настройка цветопередачи терминала (БЕЗ АРТЕФАКТОВ) ---
 echo "=== Шаг 10: Настройка True Color в .bashrc ==="
 
 patch_color_settings() {
   local bashrc_file="$1"
   local owner="$2"
   
-  # Строки, которые хотим добавить
-  local color_exports="export COLORTERM=truecolor\nexport TERM=xterm-256color\n"
+  # Оборачиваем в проверку на интерактивность [[ $- == *i* ]]
+  # Это уберет мусор (артефакты) при логине
+  local color_block='
+# Включение True Color только для интерактивных сессий
+if [[ $- == *i* ]]; then
+    export COLORTERM=truecolor
+    export TERM=xterm-256color
+fi
+'
 
-  # Проверяем, не добавлены ли уже эти переменные
   if ! grep -q "COLORTERM=truecolor" "$bashrc_file"; then
-    # Ищем стандартный маркер начала настроек промпта в Ubuntu
     if grep -q "set a fancy prompt" "$bashrc_file"; then
-      # Вставляем ПЕРЕД найденной строкой
-      sed -i "/# set a fancy prompt/i $color_exports" "$bashrc_file"
-      echo "  • Цветовые переменные добавлены перед fancy prompt в $bashrc_file"
+      # Используем временный файл для чистой вставки блока
+      sed -i "/# set a fancy prompt/i $color_block" "$bashrc_file"
+      echo "  • True Color настройки добавлены в $bashrc_file"
     else
-      # Если маркер не найден, просто добавим в начало файла
-      echo -e "$color_exports\n$(cat "$bashrc_file")" > "$bashrc_file"
-      echo "  • Маркер не найден, переменные добавлены в начало $bashrc_file"
+      echo -e "$color_block" >> "$bashrc_file"
+      echo "  • Маркер не найден, настройки добавлены в конец $bashrc_file"
     fi
     chown "$owner:$owner" "$bashrc_file"
   else
-    echo "  ℹ️ Настройки True Color уже есть в $bashrc_file"
+    echo "  ℹ️ Настройки True Color уже присутствуют в $bashrc_file"
   fi
 }
 
