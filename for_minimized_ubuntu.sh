@@ -50,8 +50,6 @@ patch_bashrc() {
     sed -i "s|ls -alF|${LS_TOOL} -lag|g"           "$TARGET_RC"
     sed -i "s|ls -A|ls -lA|g"                      "$TARGET_RC"
     sed -i "s|ls -CF|ls|g"                         "$TARGET_RC"
-    # Переносим '$' на новую строку
-    sed -i 's/\\\$/\\n\\$/' "$TARGET_RC"
     # Добавляем bash-completion, если нет
     grep -q "source /etc/profile.d/bash_completion.sh" "$TARGET_RC" \
         || echo "source /etc/profile.d/bash_completion.sh" >> "$TARGET_RC"
@@ -96,8 +94,8 @@ setup_user_environment "/root" "root" true
 curl -fsSL https://raw.githubusercontent.com/imomaliev/tmux-bash-completion/master/completions/tmux \
      -o /usr/share/bash-completion/completions/tmux
 
-# --- Шаг 3 ---
-yellow_echo "=== Шаг 3: создание /etc/profile.d/force-color-prompt.sh ==="
+# --- Шаг 4 ---
+yellow_echo "=== Шаг 4: создание /etc/profile.d/force-color-prompt.sh ==="
 cat > /etc/profile.d/force-color-prompt.sh << 'EOF'
 # /etc/profile.d/force-color-prompt.sh
 # Принудительно включаем цветной prompt в login-shell
@@ -107,8 +105,8 @@ EOF
 chmod 644 /etc/profile.d/force-color-prompt.sh
 yellow_echo "✅ /etc/profile.d/force-color-prompt.sh создан."
 
-# --- Шаг 4 ---
-yellow_echo "=== Шаг 4: Добавление настроек автодополнения в .bashrc ==="
+# --- Шаг 5 ---
+yellow_echo "=== Шаг 5: Добавление настроек автодополнения в .bashrc ==="
 add_bashrc_settings() {
     local bashrc_file="$1"
     local owner="$2"
@@ -129,8 +127,8 @@ add_bashrc_settings() {
 add_bashrc_settings "$ORIG_HOME/.bashrc" "$ORIG_USER"
 add_bashrc_settings "/root/.bashrc" "root"
 
-# --- Шаг 5 ---
-yellow_echo "=== Шаг 5: Настройка fish_prompt ==="
+# --- Шаг 6 ---
+yellow_echo "=== Шаг 6: Настройка fish_prompt ==="
 install_fish_prompt() {
     local home_dir="$1"
     local owner="$2"
@@ -179,8 +177,8 @@ EOF
 install_fish_prompt "$ORIG_HOME" "$ORIG_USER"
 install_fish_prompt "/root" "root"
 
-# --- Шаг 6 ---
-yellow_echo "=== Шаг 6: Добавление автоподключения к tmux при SSH ==="
+# --- Шаг 7 ---
+yellow_echo "=== Шаг 7: Добавление автоподключения к tmux при SSH ==="
 add_tmux_autostart() {
     local bashrc_file="$1"
     local owner="$2"
@@ -206,8 +204,8 @@ fi
 add_tmux_autostart "$ORIG_HOME/.bashrc" "$ORIG_USER"
 add_tmux_autostart "/root/.bashrc" "root"
 
-# --- Шаг 7 ---
-yellow_echo "=== Шаг 9: Настройка Vim (DARK SANDS) ==="
+# --- Шаг 8 ---
+yellow_echo "=== Шаг 8: Настройка Vim (DARK SANDS) ==="
 install_vim_standard() {
     local home_dir="$1"
     local owner="$2"
@@ -226,8 +224,8 @@ install_vim_standard() {
 install_vim_standard "$ORIG_HOME" "$ORIG_USER"
 install_vim_standard "/root" "root"
 
-# --- Шаг 8 ---
-yellow_echo "=== Шаг 8: Настройка True Color в .bashrc ==="
+# --- Шаг 9 ---
+yellow_echo "=== Шаг 9: Настройка True Color в .bashrc ==="
 patch_color_settings() {
     local bashrc_file="$1"
     local owner="$2"
@@ -245,8 +243,8 @@ patch_color_settings() {
 patch_color_settings "$ORIG_HOME/.bashrc" "$ORIG_USER"
 patch_color_settings "/root/.bashrc" "root"
 
-# --- Шаг 9 ---
-yellow_echo "=== Шаг 9: Настройка batcat (симлинк и конфиг) ==="
+# --- Шаг 10 ---
+yellow_echo "=== Шаг 10: Настройка batcat (симлинк и конфиг) ==="
 
 install_bat_settings() {
     local home_dir="$1"
@@ -275,6 +273,29 @@ install_bat_settings() {
 # Применяем для пользователя и root
 install_bat_settings "$ORIG_HOME" "$ORIG_USER"
 install_bat_settings "/root" "root"
+
+# --- Шаг 11 ---
+yellow_echo "=== Шаг 11: Настройка цветов Bash Prompt (User@Host) ==="
+
+append_custom_prompt() {
+    local bashrc_file="$1"
+    local owner="$2"
+    
+    # Обновленный промпт (Yellow \u, White @, Green \h, Blue \w, Newline before $)
+    local prompt_string="PS1='\[\033[01;33m\]\u\[\033[00m\]@\[\033[01;32m\]\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n\$ '"
+
+    if ! grep -q "Обновленный промпт" "$bashrc_file"; then
+        echo -e "\n# Обновленный промпт" >> "$bashrc_file"
+        echo "$prompt_string" >> "$bashrc_file"
+        chown "$owner:$owner" "$bashrc_file"
+        yellow_echo "  • Промпт добавлен в конец $bashrc_file"
+    else
+        yellow_echo "  ℹ️ Промпт уже присутствует в $bashrc_file"
+    fi
+}
+
+append_custom_prompt "$ORIG_HOME/.bashrc" "$ORIG_USER"
+append_custom_prompt "/root/.bashrc" "root"
 
 yellow_echo "\nГотово! Настройки применены."
 yellow_echo "Перезапустите терминал или выполните 'source ~/.bashrc'."
