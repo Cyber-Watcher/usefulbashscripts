@@ -297,5 +297,32 @@ append_custom_prompt() {
 append_custom_prompt "$ORIG_HOME/.bashrc" "$ORIG_USER"
 append_custom_prompt "/root/.bashrc" "root"
 
+# --- Шаг 12 ---
+yellow_echo "=== Шаг 12: Настройка yamllint (отключение document-start) ==="
+
+configure_yamllint() {
+    local home_dir="$1"
+    local owner="$2"
+    local config_dir="$home_dir/.config/yamllint"
+    
+    mkdir -p "$config_dir"
+    
+    cat > "$config_dir/config" <<EOF
+# Глобальный конфиг yamllint (Dark Sands Edition)
+extends: default
+
+rules:
+  document-start: disable  # Убираем требование '---' в начале файла
+  line-length:
+    max: 120               # Расширяем лимит строки до 120 символов
+EOF
+
+    chown -R "$owner:$owner" "$home_dir/.config"
+    yellow_echo "  • Глобальный yamllint конфиг создан для $owner"
+}
+
+configure_yamllint "$ORIG_HOME" "$ORIG_USER"
+configure_yamllint "/root" "root"
+
 yellow_echo "\nГотово! Настройки применены."
 yellow_echo "Перезапустите терминал или выполните 'source ~/.bashrc'."
